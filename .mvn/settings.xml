@@ -16,6 +16,8 @@
     <mirrors>
         <!--
             Block repositories declared by dependency POMs.
+            The sonatype-snapshots repository declared in the root POM is allowed so that airlift
+            SNAPSHOT versions can be resolved.
             Downside: an artifact missing from the allowed repositories, such as a reactor
             SNAPSHOT not built yet, fails with "Blocked mirror for repositories: [...]"
             instead of a plain "could not find artifact".
@@ -24,7 +26,7 @@
         -->
         <mirror>
             <id>block-undeclared-repositories</id>
-            <mirrorOf>*,!central,!google-maven-central,!confluent</mirrorOf>
+            <mirrorOf>*,!central,!google-maven-central,!confluent,!sonatype-snapshots</mirrorOf>
             <url>https://0.0.0.0/</url>
             <blocked>true</blocked>
         </mirror>

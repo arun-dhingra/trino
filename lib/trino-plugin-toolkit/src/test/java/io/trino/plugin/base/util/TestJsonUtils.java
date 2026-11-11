@@ -14,10 +14,10 @@
 package io.trino.plugin.base.util;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.StreamReadConstraints;
-import com.fasterxml.jackson.core.util.JsonRecyclerPools;
-import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Test;
+import tools.jackson.core.StreamReadConstraints;
+import tools.jackson.core.util.JsonRecyclerPools;
+import tools.jackson.databind.JsonNode;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;

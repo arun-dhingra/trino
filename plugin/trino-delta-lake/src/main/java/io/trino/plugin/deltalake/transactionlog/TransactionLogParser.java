@@ -13,10 +13,6 @@
  */
 package io.trino.plugin.deltalake.transactionlog;
 
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import dev.failsafe.Failsafe;
@@ -36,6 +32,9 @@ import io.trino.spi.type.Decimals;
 import io.trino.spi.type.LongTimestampWithTimeZone;
 import io.trino.spi.type.Type;
 import jakarta.annotation.Nullable;
+import tools.jackson.core.exc.StreamReadException;
+import tools.jackson.databind.DatabindException;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -283,7 +282,7 @@ public final class TransactionLogParser
     }
 
     private static Optional<LastCheckpoint> tryReadLastCheckpoint(TrinoFileSystem fileSystem, String tableLocation)
-            throws JsonParseException, JsonMappingException
+            throws StreamReadException, DatabindException
     {
         Location checkpointPath = Location.of(getTransactionLogDir(tableLocation)).appendPath(LAST_CHECKPOINT_FILENAME);
         TrinoInputFile inputFile = fileSystem.newInputFile(checkpointPath);
@@ -291,7 +290,7 @@ public final class TransactionLogParser
             // Note: there apparently is 8K buffering applied and _last_checkpoint should be much smaller.
             return Optional.of(JsonUtils.parseJson(JSON_MAPPER, lastCheckpointInput, LastCheckpoint.class));
         }
-        catch (JsonParseException | JsonMappingException e) {
+        catch (StreamReadException | DatabindException e) {
             // The _last_checkpoint file is malformed, it's probably in the middle of a rewrite (file rewrites on Azure are NOT atomic)
             throw e;
         }
@@ -368,7 +367,7 @@ public final class TransactionLogParser
         }
         catch (IOException | UncheckedIOException e) {
             // Checksum files are optional; missing or malformed checksum files fall back to scanning the Delta log
-            if (isFileNotFoundException(e) || Throwables.getCausalChain(e).stream().anyMatch(JsonProcessingException.class::isInstance)) {
+            if (isFileNotFoundException(e) || Throwables.getCausalChain(e).stream().anyMatch(cause -> cause instanceof StreamReadException || cause instanceof DatabindException)) {
                 return Optional.empty();
             }
             throw e;
